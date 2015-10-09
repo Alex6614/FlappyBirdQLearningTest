@@ -18,7 +18,7 @@ import javax.swing.Timer;
 
 public class FlappyBird implements ActionListener, MouseListener, KeyListener
 {
-
+	
 	public static FlappyBird flappyBird;
 
 	public final int WIDTH = 800, HEIGHT = 800;
@@ -31,14 +31,21 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 
 	public int ticks, yMotion, score;
 
-	public boolean gameOver, started;
+	public boolean gameOver;
+	
+	public boolean started = true;
 
 	public Random rand;
+	
+	public QFlap a;
+	
+	int nextPipe;
 
+	
 	public FlappyBird()
 	{
 		JFrame jframe = new JFrame();
-		Timer timer = new Timer(20, this);
+		Timer timer = new Timer(1, this); 
 
 		renderer = new Renderer();
 		rand = new Random();
@@ -59,7 +66,9 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 		addColumn(true);
 		addColumn(true);
 		addColumn(true);
-
+		
+		a = new QFlap();
+		nextPipe = 1;
 		timer.start();
 	}
 
@@ -67,7 +76,7 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 	{
 		int space = 300;
 		int width = 100;
-		int height = 50 + rand.nextInt(300);
+		int height = 100; //50 + rand.nextInt(300);
 
 		if (start)
 		{
@@ -115,7 +124,7 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 				yMotion = 0;
 			}
 
-			yMotion -= 10;
+			yMotion -= 5; // used to b 10
 		}
 	}
 
@@ -125,9 +134,10 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 		int speed = 10;
 
 		ticks++;
-
+		
 		if (started)
 		{
+			
 			for (int i = 0; i < columns.size(); i++)
 			{
 				Rectangle column = columns.get(i);
@@ -135,7 +145,7 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 				column.x -= speed;
 			}
 
-			if (ticks % 2 == 0 && yMotion < 15)
+			if (ticks % 2 == 0 && yMotion < 2) // used to be ymotion < 8
 			{
 				yMotion += 2;
 			}
@@ -197,11 +207,63 @@ public class FlappyBird implements ActionListener, MouseListener, KeyListener
 				bird.y = HEIGHT - 120 - bird.height;
 				gameOver = true;
 			}
+
+			
+			// My stuff here
+			
+			a.update(bird.y - heightOfNextPipe(), distanceToNextPipe(), gameOver);
+			if (ticks % 4 == 0){
+			if(a.decide(bird.y - heightOfNextPipe(), distanceToNextPipe(), gameOver)){
+				jump();
+			}}
+			// My stuff above
+			if (gameOver)
+			{
+				bird = new Rectangle(WIDTH / 2 - 10, HEIGHT / 2 - 10, 20, 20);
+				columns.clear();
+				yMotion = 0;
+				score = 0;
+
+				addColumn(true);
+				addColumn(true);
+				addColumn(true);
+				addColumn(true);
+
+				gameOver = false;
+			}
+			
+
 		}
 
 		renderer.repaint();
 	}
 
+	
+	public int distanceToNextPipe(){
+		int minDistance = 69696969;
+		for (Rectangle a: columns){
+			if (a.x - bird.x + 100>= 0){
+				minDistance = Math.min(minDistance, a.x - bird.x + 100);
+			}
+		}
+		return minDistance;
+	}
+	
+	public int heightOfNextPipe(){
+		int nextHeight = 69696969;
+		
+		for(int i = 0; i < columns.size(); i = i + 2){
+			if (columns.get(i).x >= 310 && columns.get(i).x <= 610 + 390 - 80){
+				nextHeight = columns.get(i).y;
+				if (nextHeight == 0){
+					return nextPipe;
+				}
+				nextPipe = nextHeight;
+		}
+		}
+		return nextHeight;
+	}
+	
 	public void repaint(Graphics g)
 	{
 		g.setColor(Color.cyan);
